@@ -1,0 +1,893 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" href="lavi.jpg">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Lavi · Assistente Financeira no WhatsApp">
+<meta property="og:description" content="Conte o que gastou e a Lavi organiza o resto. Gratuita enquanto está em desenvolvimento.">
+<meta property="og:image" content="lavi.jpg">
+<title>Lavi Assistente Financeira</title>
+<meta name="description" content="A Lavi é uma assistente financeira que mora no WhatsApp: você conta o que gastou ou recebeu e ela organiza tudo.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Caveat+Brush&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&display=swap">
+<style>
+/* Conceito: a "aula" da Lavi. A lousa verde do avatar é o palco (hero e faixas de giz);
+   o resto é papel claro e calmo, com o rosa do cabelo dela como único destaque. */
+:root{
+  --lousa:#1f4d3c; --lousa-2:#173c2f; --giz:#f4f2ea; --giz-mut:#c9d6cc;
+  --rosa:#d4518b; --amarelo:#f3d65e; --verde-giz:#57d685; --azul-giz:#6cc3ee;
+  --bg:#f3f6f2; --sup:#ffffff; --fg:#15241d; --mut:#56685e; --bd:#dbe4dc;
+  --zap-bg:#e9e3d9; --zap-eu:#d8f7c6; --zap-ela:#ffffff; --zap-txt:#1b2a22;
+  --f-giz:"Caveat Brush","Comic Sans MS",cursive;
+  --f-tit:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --f-txt:"Nunito Sans","Segoe UI",system-ui,sans-serif;
+  --raio:18px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1814; --sup:#15231d; --fg:#e7eee9; --mut:#9db0a5; --bd:#24372e;
+  --zap-bg:#0f1b16; --zap-eu:#1f5135; --zap-ela:#1c2b24; --zap-txt:#e8efe9; --rosa:#e46a9e; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1814; --sup:#15231d; --fg:#e7eee9; --mut:#9db0a5; --bd:#24372e;
+  --zap-bg:#0f1b16; --zap-eu:#1f5135; --zap-ela:#1c2b24; --zap-txt:#e8efe9; --rosa:#e46a9e; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:16px/1.6 var(--f-txt);margin:0;overflow-x:hidden}
+img{max-width:100%;display:block}
+h1,h2,h3{font-family:var(--f-tit);line-height:1.1;text-wrap:balance;margin:0}
+p{margin:0}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--rosa);outline-offset:3px;border-radius:6px}
+.miolo{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* ---------- topo fixo ---------- */
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--lousa-2)}
+.topo{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:color-mix(in srgb,var(--lousa-2) 92%,transparent);
+  backdrop-filter:blur(8px);color:var(--giz)}
+.topo .miolo{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:10px}
+.marca{display:flex;align-items:center;gap:10px;text-decoration:none}
+.marca img{width:38px;height:38px;border-radius:50%;border:2px solid var(--giz)}
+.marca b{font:28px/1 var(--f-giz);letter-spacing:.5px}
+.selo{font:700 12px/1 var(--f-txt);letter-spacing:.08em;text-transform:uppercase;padding:7px 10px;border-radius:999px;
+  border:1.5px dashed var(--amarelo);color:var(--amarelo);white-space:nowrap}
+
+/* ---------- lousa (hero) ---------- */
+.lousa{background:radial-gradient(120% 90% at 20% 10%,#2a6350 0%,var(--lousa) 45%,var(--lousa-2) 100%);color:var(--giz);
+  position:relative;overflow:hidden;border-bottom:14px solid #a9763f;box-shadow:inset 0 -3px 0 #7c5229}
+.lousa::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.18;
+  background-image:radial-gradient(rgba(255,255,255,.35) 1px,transparent 1.4px);background-size:7px 7px;mix-blend-mode:overlay}
+.hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:40px;align-items:center;padding-block:56px 48px;position:relative;z-index:1}
+.hero-txt{min-width:0;display:grid;gap:18px}
+.eyebrow{font:700 13px/1 var(--f-txt);letter-spacing:.14em;text-transform:uppercase;color:var(--amarelo)}
+.titulo-giz{width:min(100%,460px);height:auto;overflow:visible}
+.titulo-giz text{font:150px/1 var(--f-giz);fill:transparent;stroke:var(--giz);stroke-width:2.2;
+  stroke-dasharray:900;stroke-dashoffset:0;paint-order:stroke}
+.titulo-giz .preenche{fill:var(--giz);stroke:none}
+.titulo-giz .risco{stroke:var(--rosa);stroke-width:7;stroke-linecap:round;fill:none;stroke-dasharray:420;stroke-dashoffset:0}
+.hero h1{font:800 clamp(30px,4.6vw,50px)/1.08 var(--f-tit)}
+.hero h1 em{font-style:normal;color:var(--amarelo)}
+.hero .lead{font-size:clamp(16px,1.6vw,19px);color:var(--giz-mut);max-width:34em}
+.acoes{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:8px;font:700 16px/1 var(--f-txt);padding:14px 20px;border-radius:999px;
+  text-decoration:none;border:0;cursor:pointer}
+.btn-rosa{background:var(--rosa);color:#fff;box-shadow:0 6px 0 #9c2f61}
+.btn-rosa:hover{transform:translateY(-2px)}
+.btn-giz{background:transparent;color:var(--giz);border:2px solid var(--giz-mut)}
+.gratis{display:inline-flex;gap:8px;align-items:center;font:22px/1.1 var(--f-giz);color:var(--verde-giz)}
+
+/* avatar apresentando */
+.palco{position:relative;min-width:0;display:grid;justify-items:center}
+.avatar{width:min(100%,420px);aspect-ratio:1;border-radius:50%;border:6px solid var(--giz);
+  box-shadow:0 18px 40px rgba(0,0,0,.35);object-fit:cover;animation:respira 6s ease-in-out infinite}
+@keyframes respira{0%,100%{transform:translateY(0) rotate(-.6deg)}50%{transform:translateY(-8px) rotate(.6deg)}}
+.balao{position:absolute;left:-6%;top:6%;max-width:250px;background:var(--giz);color:#1b2a22;border-radius:18px 18px 18px 4px;
+  padding:12px 14px;font:600 15px/1.35 var(--f-txt);box-shadow:0 10px 24px rgba(0,0,0,.25)}
+.balao b{color:var(--rosa)}
+.balao .digita{display:inline-flex;gap:4px;vertical-align:middle}
+.balao .digita i{width:6px;height:6px;border-radius:50%;background:#7a8c82;animation:pula 1s infinite}
+.balao .digita i:nth-child(2){animation-delay:.15s}.balao .digita i:nth-child(3){animation-delay:.3s}
+@keyframes pula{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-4px);opacity:1}}
+
+/* barrinhas de giz subindo */
+.grafico-giz{position:absolute;right:-2%;bottom:-4%;width:150px;height:110px}
+.grafico-giz rect{transform-origin:bottom;transform-box:fill-box;animation:sobe 1.4s cubic-bezier(.2,.8,.2,1) both}
+.grafico-giz rect:nth-child(2){animation-delay:.15s}.grafico-giz rect:nth-child(3){animation-delay:.3s}.grafico-giz rect:nth-child(4){animation-delay:.45s}
+.grafico-giz path{stroke-dasharray:260;animation:risca 1.6s .6s ease-out both}
+@keyframes sobe{from{transform:scaleY(.08)}to{transform:scaleY(1)}}
+@keyframes risca{from{stroke-dashoffset:260}to{stroke-dashoffset:0}}
+
+/* ---------- seções ---------- */
+section{padding-block:72px}
+.sec-tit{display:grid;gap:10px;margin-bottom:34px;max-width:46em}
+.sec-tit .eyebrow{color:var(--rosa)}
+.sec-tit h2{font-size:clamp(28px,3.6vw,40px);font-weight:800}
+.sec-tit p{color:var(--mut);font-size:18px}
+.giz-sub{font-family:var(--f-giz);font-weight:400;color:var(--rosa);font-size:1.1em}
+
+/* demonstração: celular com WhatsApp */
+.demo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,380px);gap:48px;align-items:center}
+.cenas{display:grid;gap:12px;min-width:0}
+.cena{display:flex;gap:14px;align-items:flex-start;text-align:left;background:var(--sup);border:1.5px solid var(--bd);border-radius:var(--raio);
+  padding:16px 18px;cursor:pointer;color:var(--fg);font:inherit;transition:border-color .25s,transform .25s,box-shadow .25s}
+.cena:hover{transform:translateX(4px)}
+.cena[aria-pressed="true"]{border-color:var(--rosa);box-shadow:0 8px 22px color-mix(in srgb,var(--rosa) 18%,transparent)}
+.cena .ic{flex:0 0 44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:22px;background:color-mix(in srgb,var(--lousa) 12%,var(--sup))}
+.cena b{display:block;font:700 17px/1.25 var(--f-tit)}
+.cena span{color:var(--mut);font-size:15px}
+.cena .barra{height:3px;border-radius:3px;background:var(--bd);margin-top:10px;overflow:hidden}
+.cena .barra i{display:block;height:100%;width:0;background:var(--rosa)}
+.cena[aria-pressed="true"] .barra i{animation:enche var(--dur,9s) linear forwards}
+@keyframes enche{to{width:100%}}
+
+.celular{justify-self:center;width:min(100%,360px);border-radius:42px;background:#101613;padding:12px;box-shadow:0 30px 60px rgba(10,30,20,.28)}
+.tela{border-radius:32px;overflow:hidden;background:var(--zap-bg);display:flex;flex-direction:column;height:620px}
+.zap-topo{background:#1f4d3c;color:#fff;display:flex;align-items:center;gap:10px;padding:12px 14px}
+.zap-topo img{width:36px;height:36px;border-radius:50%}
+.zap-topo b{display:block;font:700 15px/1.1 var(--f-txt)}
+.zap-topo small{font-size:12px;opacity:.8}
+.conversa{flex:1;overflow:hidden;padding:14px 10px;display:flex;flex-direction:column;justify-content:flex-end;gap:8px;
+  background-image:radial-gradient(color-mix(in srgb,var(--zap-txt) 7%,transparent) 1px,transparent 1.5px);background-size:16px 16px}
+.msg{max-width:86%;padding:8px 10px 6px;border-radius:12px;font-size:13.5px;line-height:1.4;color:var(--zap-txt);
+  box-shadow:0 1px 1px rgba(0,0,0,.12);white-space:pre-line;animation:entra .35s cubic-bezier(.2,.9,.3,1.2) both}
+.msg.eu{align-self:flex-end;background:var(--zap-eu);border-top-right-radius:4px}
+.msg.ela{align-self:flex-start;background:var(--zap-ela);border-top-left-radius:4px}
+.msg .h{display:block;text-align:right;font-size:10.5px;opacity:.6;margin-top:2px}
+.msg b{font-weight:800}
+@keyframes entra{from{opacity:0;transform:translateY(10px) scale(.96)}to{opacity:1;transform:none}}
+.audio{display:flex;align-items:center;gap:8px;min-width:190px}
+.audio .play{width:26px;height:26px;border-radius:50%;background:#1f4d3c;color:#fff;display:grid;place-items:center;font-size:11px}
+.onda{display:flex;gap:2px;align-items:center;height:24px;flex:1}
+.onda i{width:3px;border-radius:2px;background:#4a7a63;animation:onda 1.1s ease-in-out infinite}
+@keyframes onda{0%,100%{transform:scaleY(.45)}50%{transform:scaleY(1)}}
+.foto{width:170px;border-radius:8px;overflow:hidden;background:#fff;border:1px solid #d9d9d9;padding:8px;font:10px/1.35 monospace;color:#333}
+.foto .lin{height:5px;background:#e3e3e3;border-radius:3px;margin:4px 0}
+.foto .cod{height:22px;margin-top:6px;background:repeating-linear-gradient(90deg,#222 0 2px,#fff 2px 4px,#222 4px 5px,#fff 5px 8px)}
+.digitando{align-self:flex-start;background:var(--zap-ela);border-radius:12px;padding:10px 12px;display:flex;gap:4px}
+.digitando i{width:7px;height:7px;border-radius:50%;background:#8a9a91;animation:pula 1s infinite}
+.digitando i:nth-child(2){animation-delay:.15s}.digitando i:nth-child(3){animation-delay:.3s}
+.zap-base{display:flex;gap:8px;padding:8px 10px;background:color-mix(in srgb,var(--zap-bg) 70%,#000 0%)}
+.zap-base div{flex:1;background:var(--zap-ela);border-radius:20px;padding:9px 14px;font-size:13px;color:var(--mut)}
+.zap-base span{width:38px;height:38px;border-radius:50%;background:#1f4d3c;color:#fff;display:grid;place-items:center}
+
+/* o que já faz */
+.grade{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.cartao{background:var(--sup);border:1.5px solid var(--bd);border-radius:var(--raio);padding:22px;display:grid;gap:12px;align-content:start;
+  transition:transform .3s,box-shadow .3s}
+.cartao:hover{transform:translateY(-4px);box-shadow:0 14px 30px color-mix(in srgb,var(--lousa) 14%,transparent)}
+.cartao h3{font-size:21px;font-weight:700;display:flex;gap:10px;align-items:center}
+.cartao h3 .ic{font-size:24px}
+.cartao ul{margin:0;padding-left:18px;display:grid;gap:6px;color:var(--mut)}
+.cartao li::marker{color:var(--rosa)}
+.cartao code{font:600 13.5px/1.3 ui-monospace,Consolas,monospace;background:color-mix(in srgb,var(--lousa) 9%,var(--sup));
+  color:var(--fg);padding:1px 6px;border-radius:6px;white-space:nowrap}
+.cartao.lousinha{background:var(--lousa);border-color:var(--lousa-2);color:var(--giz)}
+.cartao.lousinha ul{color:var(--giz-mut)}
+.cartao.lousinha code{background:rgba(255,255,255,.1);color:var(--giz)}
+
+/* faixa de giz com números do projeto */
+.faixa{background:var(--lousa);color:var(--giz);padding-block:40px}
+.faixa .miolo{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;text-align:center}
+.faixa b{display:block;font:44px/1 var(--f-giz);color:var(--amarelo);font-variant-numeric:tabular-nums}
+.faixa span{color:var(--giz-mut);font-size:15px}
+
+/* linha do tempo */
+.tempo{list-style:none;margin:0;padding:0;display:grid;gap:0;position:relative}
+.tempo::before{content:"";position:absolute;left:94px;top:8px;bottom:8px;width:3px;background:repeating-linear-gradient(var(--rosa) 0 10px,transparent 10px 18px)}
+.tempo li{display:grid;grid-template-columns:80px 30px minmax(0,1fr);gap:14px;align-items:start;padding-block:14px}
+.tempo time{font:22px/1.2 var(--f-giz);color:var(--rosa);text-align:right}
+.tempo .ponto{width:18px;height:18px;border-radius:50%;background:var(--sup);border:3px solid var(--rosa);margin:4px 0 0 0;justify-self:center;position:relative;z-index:1}
+.tempo li.agora .ponto{background:var(--rosa);box-shadow:0 0 0 6px color-mix(in srgb,var(--rosa) 25%,transparent);animation:pulsa 2s infinite}
+@keyframes pulsa{50%{box-shadow:0 0 0 12px color-mix(in srgb,var(--rosa) 0%,transparent)}}
+.tempo h3{font-size:19px;font-weight:700;margin-bottom:4px}
+.tempo p{color:var(--mut)}
+
+/* em construção */
+.obra{background:var(--sup);border:2px dashed var(--bd);border-radius:24px;padding:34px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:34px;align-items:center}
+.obra h2{font-size:clamp(26px,3.2vw,36px);font-weight:800}
+.obra p{color:var(--mut);margin-top:12px}
+.fita{height:16px;border-radius:8px;background:repeating-linear-gradient(-45deg,var(--amarelo) 0 14px,#2a2a2a 14px 28px);opacity:.9;margin-bottom:22px}
+.progresso{display:grid;gap:14px}
+.progresso div{display:grid;gap:6px}
+.progresso .rot{display:flex;justify-content:space-between;font-weight:700;font-size:15px}
+.progresso .rot span:last-child{color:var(--mut);font-weight:600}
+.trilho{height:12px;border-radius:8px;background:color-mix(in srgb,var(--lousa) 10%,var(--bg));overflow:hidden}
+.trilho i{display:block;height:100%;border-radius:8px;background:var(--lousa);transform-origin:left;animation:sobeX 1.6s cubic-bezier(.2,.8,.2,1) both}
+.trilho i.rosa{background:var(--rosa)}
+@keyframes sobeX{from{transform:scaleX(.05)}to{transform:scaleX(1)}}
+.gratis-grande{margin-top:22px;display:inline-flex;align-items:center;gap:10px;background:color-mix(in srgb,var(--verde-giz) 18%,var(--sup));
+  border:1.5px solid color-mix(in srgb,var(--verde-giz) 55%,var(--bd));border-radius:14px;padding:12px 16px;font-weight:700}
+
+footer{background:var(--lousa-2);color:var(--giz-mut);padding-block:36px;font-size:14px}
+footer .miolo{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;align-items:center}
+footer b{font:30px/1 var(--f-giz);color:var(--giz)}
+
+/* botão do WhatsApp */
+.btn-zap{background:#25d366;color:#0b2416;box-shadow:0 6px 0 #169c4a}
+.btn-zap:hover,.btn-rosa:hover{transform:translateY(-2px)}
+.btn-zap svg{width:20px;height:20px}
+.topo .btn-zap{padding:9px 14px;font-size:14px;box-shadow:0 3px 0 #169c4a}
+
+/* avatar: inclina seguindo o dedo/mouse e "fala" (ondas) quando o balão muda */
+.palco{perspective:900px}
+.avatar-caixa{position:relative;width:min(100%,420px);transform-style:preserve-3d;transition:transform .25s ease-out}
+.avatar-caixa .avatar{width:100%}
+.ondas{position:absolute;inset:-4%;border-radius:50%;pointer-events:none}
+.ondas i{position:absolute;inset:0;border-radius:50%;border:3px solid var(--amarelo);opacity:0}
+.falando .ondas i{animation:onda-fala 1.2s ease-out 3}
+.falando .ondas i:nth-child(2){animation-delay:.4s}
+@keyframes onda-fala{from{transform:scale(.96);opacity:.7}to{transform:scale(1.12);opacity:0}}
+.falando .avatar{animation:fala .35s ease-in-out 6 alternate}
+@keyframes fala{from{transform:translateY(0) scale(1)}to{transform:translateY(-5px) scale(1.012)}}
+.acena{animation:acena 1.1s ease-in-out}
+@keyframes acena{0%,100%{rotate:0deg}20%{rotate:-5deg}40%{rotate:4deg}60%{rotate:-3deg}80%{rotate:2deg}}
+
+/* Lavi guia (canto da tela): acompanha a página e explica cada parte */
+.guia{position:fixed;z-index:8;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));
+  display:flex;align-items:flex-end;gap:10px;max-width:min(360px,calc(100vw - 28px));pointer-events:none}
+.guia>*{pointer-events:auto}
+.guia .fala{background:var(--sup);color:var(--fg);border:1.5px solid var(--bd);border-radius:16px 16px 4px 16px;padding:12px 14px;
+  font-size:14.5px;line-height:1.4;box-shadow:0 12px 30px rgba(10,30,20,.18);display:grid;gap:8px;transform-origin:bottom right;
+  animation:entra .35s cubic-bezier(.2,.9,.3,1.2) both}
+.guia .fala b{color:var(--rosa)}
+.guia .fala .acoes-guia{display:flex;gap:8px;justify-content:flex-end}
+.guia .fala button{font:700 13px/1 var(--f-txt);border-radius:999px;padding:8px 12px;cursor:pointer;border:1.5px solid var(--bd);background:var(--sup);color:var(--fg)}
+.guia .fala button.vai,.guia .fala a.vai{background:var(--rosa);border-color:var(--rosa);color:#fff}
+.guia .fala a.vai{font:700 13px/1 var(--f-txt);border-radius:999px;padding:8px 12px;text-decoration:none;border:1.5px solid var(--rosa)}
+.guia .rosto{flex:0 0 auto;width:68px;height:68px;border-radius:50%;border:3px solid var(--rosa);box-shadow:0 8px 20px rgba(10,30,20,.25);
+  cursor:pointer;padding:0;background:none;position:relative}
+.guia .rosto img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+.guia .rosto::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:2px solid var(--rosa);opacity:0}
+.guia.falando .rosto{animation:fala .3s ease-in-out 8 alternate}
+.guia.falando .rosto::after{animation:onda-fala 1s ease-out 3}
+.guia.recolhida .fala{display:none}
+
+/* painel de exemplo */
+.painel-ex{background:var(--sup);border:1.5px solid var(--bd);border-radius:24px;padding:22px;display:grid;gap:20px;
+  box-shadow:0 20px 50px color-mix(in srgb,var(--lousa) 10%,transparent)}
+.painel-ex .cab{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.painel-ex .cab h3{font-size:22px}
+.painel-ex .cab .sub{color:var(--mut);font-size:13px}
+.etiqueta{font:700 11px/1 var(--f-txt);letter-spacing:.1em;text-transform:uppercase;background:var(--amarelo);color:#3b3000;
+  padding:6px 9px;border-radius:999px}
+.controles{display:flex;gap:8px;flex-wrap:wrap}
+.controles button{font:600 14px/1 var(--f-txt);padding:10px 14px;border-radius:10px;border:1.5px solid var(--bd);background:var(--sup);color:var(--fg);cursor:pointer}
+.controles button[aria-pressed="true"]{background:var(--lousa);border-color:var(--lousa);color:var(--giz)}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.kpi{border:1.5px solid var(--bd);border-radius:14px;padding:12px 14px}
+.kpi .t{color:var(--mut);font-size:12px}
+.kpi .v{font:700 22px/1.2 var(--f-tit);font-variant-numeric:tabular-nums}
+.kpi .d{font-size:12px;color:var(--mut)}
+.pos{color:#16834a}.neg{color:#c2410c}
+.painel-corpo{display:grid;grid-template-columns:minmax(0,240px) minmax(0,1fr);gap:24px;align-items:start}
+.rosca{display:grid;gap:12px;justify-items:center}
+.rosca svg{width:200px;height:200px}
+.rosca circle{fill:none;stroke-width:26;transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1),stroke-dashoffset .8s cubic-bezier(.2,.8,.2,1)}
+.rosca text{fill:var(--fg);font:700 16px var(--f-tit)}
+.rosca .rot{fill:var(--mut);font:12px var(--f-txt)}
+.cats{display:grid;gap:4px;min-width:0}
+.cats details{border-bottom:1px solid var(--bd)}
+.cats summary{list-style:none;cursor:pointer;padding:9px 0}
+.cats summary::-webkit-details-marker{display:none}
+.cats .linha{display:flex;justify-content:space-between;gap:8px;font-size:14.5px}
+.cats .linha span:first-child::before{content:"▸ ";color:var(--mut)}
+.cats details[open] .linha span:first-child::before{content:"▾ "}
+.cats .linha span:last-child{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:700}
+.cats .trilho{height:10px;margin-top:5px;position:relative}
+.cats .trilho i{transition:width .8s cubic-bezier(.2,.8,.2,1);animation:none}
+.cats .trilho i.cmp{position:absolute;inset:auto auto 0 0;height:4px;background:var(--mut);opacity:.55}
+.cats .abre{margin:0 0 10px 14px;padding:2px 10px;border-left:3px solid var(--bd)}
+.cats .lanc{display:flex;justify-content:space-between;gap:10px;padding:7px 0;font-size:13.5px;border-bottom:1px dashed var(--bd)}
+.cats .lanc:last-child{border-bottom:0}
+.cats .lanc small{display:block;color:var(--mut);font-size:12px}
+.cats .lanc b{white-space:nowrap;font-variant-numeric:tabular-nums}
+.dica-toque{color:var(--mut);font-size:13px}
+
+/* comece agora + compartilhar */
+.comece{background:var(--lousa);color:var(--giz);border-radius:28px;padding:34px;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,.7fr);gap:30px;align-items:center;
+  position:relative;overflow:hidden}
+.comece h2{font-size:clamp(26px,3.4vw,38px);font-weight:800}
+.comece p{color:var(--giz-mut);margin-top:10px}
+.numero{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:18px}
+.numero output{font:30px/1 var(--f-giz);color:var(--amarelo);user-select:all;letter-spacing:.5px}
+.numero button,.compartilhar a,.compartilhar button{font:700 14px/1 var(--f-txt);padding:10px 14px;border-radius:999px;cursor:pointer;
+  border:1.5px solid rgba(255,255,255,.35);background:rgba(255,255,255,.08);color:var(--giz);text-decoration:none;display:inline-flex;gap:8px;align-items:center}
+.numero button:hover,.compartilhar a:hover,.compartilhar button:hover{background:rgba(255,255,255,.16)}
+.compartilhar{display:grid;gap:10px;margin-top:22px}
+.compartilhar .redes{display:flex;flex-wrap:wrap;gap:8px}
+.compartilhar span{font:700 12px/1 var(--f-txt);letter-spacing:.12em;text-transform:uppercase;color:var(--amarelo)}
+.qr{justify-self:center;background:#fff;border-radius:18px;padding:14px;display:grid;gap:8px;justify-items:center;color:#1b2a22;max-width:100%}
+.qr #qr{width:180px;height:180px;display:grid;place-items:center}
+.qr #qr img,.qr #qr svg{width:180px;height:180px}
+.qr small{font-size:12.5px;text-align:center;max-width:180px}
+.aviso-copia{min-height:1.2em;font-size:13px;color:var(--verde-giz)}
+
+/* aparece ao rolar: começa visível, só ganha um leve deslize */
+.sobe{transition:transform .7s cubic-bezier(.2,.8,.2,1)}
+.js .sobe.espera{transform:translateY(26px)}
+
+@media (max-width:900px){
+  .hero,.demo,.obra{grid-template-columns:minmax(0,1fr)}
+  .hero{padding-block:36px 40px;gap:28px}
+  .palco{order:-1}
+  .avatar{width:min(78vw,320px)}
+  .balao{left:0;top:auto;bottom:-6px;max-width:220px;font-size:14px}
+  .grade{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .faixa .miolo{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .celular{order:-1}
+}
+@media (max-width:900px){
+  .painel-corpo,.comece{grid-template-columns:minmax(0,1fr)}
+  .kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media (max-width:600px){
+  .kpis{grid-template-columns:minmax(0,1fr)}
+  .topo .btn-zap span{display:none}
+  .comece{padding:24px}
+  .guia .rosto{width:56px;height:56px}
+  .guia .fala{font-size:13.5px}
+  section{padding-block:52px}
+  .grade{grid-template-columns:minmax(0,1fr)}
+  .tela{height:560px}
+  .selo{display:none}
+  .grafico-giz{width:110px;height:80px;right:0}
+  .tempo::before{left:72px}
+  .tempo li{grid-template-columns:58px 30px minmax(0,1fr);gap:10px}
+  .tempo time{font-size:19px}
+  .obra{padding:24px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .js .sobe.espera{transform:none}
+}
+
+/* (vem do esqueleto do Artifact) espaço das barras do celular */
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+
+
+<header class="topo">
+  <div class="miolo">
+    <a class="marca" href="#inicio"><img src="lavi.jpg" alt=""><b>Lavi</b></a>
+    <span class="selo">🚧 Em construção · grátis</span>
+    <a class="btn btn-zap" href="https://wa.me/556182699027?text=Oi%20Lavi!" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.5l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.8 11.9 11.9 0 0 0 4.6 4c1.7.7 2.4.8 3.2.7a2.8 2.8 0 0 0 1.8-1.3 2.3 2.3 0 0 0 .2-1.3c-.1-.1-.3-.2-.5-.3Z"/></svg><span>Falar com a Lavi</span></a>
+  </div>
+</header>
+
+<main id="inicio">
+  <!-- ===================== LOUSA ===================== -->
+  <div class="lousa">
+    <div class="miolo hero">
+      <div class="hero-txt">
+        <span class="eyebrow">Sua assistente financeira no WhatsApp</span>
+        <svg class="titulo-giz" viewBox="0 0 460 190" role="img" aria-label="Lavi">
+          <text id="tituloGiz" x="6" y="140">Lavi</text>
+          <path class="risco" id="riscoGiz" d="M10 172 C 120 160, 260 168, 420 158"/>
+        </svg>
+        <h1>Conte o que gastou. <em>A Lavi organiza o resto.</em></h1>
+        <p class="lead">Mande uma mensagem, um áudio ou a foto do comprovante. A Lavi entende do seu jeito, anota na conta certa,
+          soma os saldos, lembra o que você tem a pagar e a receber e mostra para onde foi o seu dinheiro.</p>
+        <div class="acoes">
+          <a class="btn btn-zap" href="https://wa.me/556182699027?text=Oi%20Lavi!" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm4.5 12.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.5l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.8 11.9 11.9 0 0 0 4.6 4c1.7.7 2.4.8 3.2.7a2.8 2.8 0 0 0 1.8-1.3 2.3 2.3 0 0 0 .2-1.3c-.1-.1-.3-.2-.5-.3Z"/></svg>Chamar a Lavi no WhatsApp</a>
+          <a class="btn btn-giz" href="#demo">▶ Ver em ação</a>
+        </div>
+        <span class="gratis">✓ Gratuita enquanto estamos em desenvolvimento</span>
+      </div>
+      <div class="palco">
+        <div class="avatar-caixa" id="avatarCaixa">
+          <img class="avatar" src="lavi.jpg" alt="Lavi, uma mulher de cabelos cacheados com mechas rosa, escrevendo a giz numa lousa verde com um gráfico subindo">
+          <div class="ondas" aria-hidden="true"><i></i><i></i></div>
+        </div>
+        <div class="balao" id="balao" aria-live="polite">Oi! 👋 Eu sou a <b>Lavi</b>. Vem que eu te mostro como funciona.</div>
+        <svg class="grafico-giz" viewBox="0 0 150 110" aria-hidden="true">
+          <rect x="8" y="70" width="22" height="34" rx="2" fill="#e46a9e"/>
+          <rect x="40" y="50" width="22" height="54" rx="2" fill="#f3d65e"/>
+          <rect x="72" y="28" width="22" height="76" rx="2" fill="#6cc3ee"/>
+          <rect x="104" y="40" width="22" height="64" rx="2" fill="#57d685"/>
+          <path d="M6 62 L44 38 L66 50 L118 10 M104 10 L118 10 L116 24" fill="none" stroke="#57d685" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== DEMONSTRAÇÃO ===================== -->
+  <section id="demo">
+    <div class="miolo demo">
+      <div class="cenas">
+        <div class="sec-tit sobe">
+          <span class="eyebrow">Veja funcionando</span>
+          <h2>Conversa de WhatsApp, <span class="giz-sub">sem planilha</span></h2>
+          <p>Estas são respostas reais da Lavi. Toque num exemplo para ver de novo.</p>
+        </div>
+        <button class="cena" data-cena="0" aria-pressed="true"><span class="ic">💬</span><span><b>Escreveu, anotou</b><span>"gastei 45 no mercado no nubank" vira uma saída na categoria certa, com o saldo atualizado.</span><div class="barra"><i></i></div></span></button>
+        <button class="cena" data-cena="1" aria-pressed="false"><span class="ic">🎤</span><span><b>Falou, anotou</b><span>Mande um áudio do jeito que você fala. Ela ouve, escreve e lança.</span><div class="barra"><i></i></div></span></button>
+        <button class="cena" data-cena="2" aria-pressed="false"><span class="ic">📸</span><span><b>Foto do boleto</b><span>Foto ou PDF: ela lê o valor e o vencimento e pergunta se você já pagou ou se vai pagar depois.</span><div class="barra"><i></i></div></span></button>
+        <button class="cena" data-cena="3" aria-pressed="false"><span class="ic">📊</span><span><b>Pergunte o que quiser</b><span>"relatório por categoria", "quanto gastei com uber em outubro", "extrato completo".</span><div class="barra"><i></i></div></span></button>
+      </div>
+
+      <div class="celular" aria-label="Simulação de conversa com a Lavi no WhatsApp">
+        <div class="tela">
+          <div class="zap-topo"><img src="lavi.jpg" alt=""><div><b>Lavi</b><small id="status">online</small></div></div>
+          <div class="conversa" id="conversa">
+            <div class="msg eu">gastei 45 no mercado no nubank<span class="h">09:12 ✓✓</span></div>
+            <div class="msg ela">⛔ <b>SAÍDA registrada</b>  #128
+💵 <b>R$ 45,00</b>
+🏷️ <b>ALIMENTAÇÃO</b>
+📝 MERCADO
+🟪 NUBANK
+┈┈┈┈┈┈┈┈┈┈
+💼 Saldo: <b>R$ 1.255,00</b><span class="h">09:12</span></div>
+          </div>
+          <div class="zap-base"><div>Mensagem</div><span>🎤</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== NÚMEROS ===================== -->
+  <div class="faixa">
+    <div class="miolo">
+      <div><b data-conta="4">4</b><span>jeitos de lançar: texto, áudio, foto e PDF</span></div>
+      <div><b data-conta="30">30</b><span>dias na lixeira antes de apagar de vez</span></div>
+      <div><b data-conta="4">4</b><span>em 4 horas, o lembrete do cobrador insistente</span></div>
+      <div><b data-conta="0">R$ 0</b><span>para usar durante o desenvolvimento</span></div>
+    </div>
+  </div>
+
+  <!-- ===================== RECURSOS ===================== -->
+  <section id="recursos">
+    <div class="miolo">
+      <div class="sec-tit sobe">
+        <span class="eyebrow">O que a Lavi já faz</span>
+        <h2>Tudo pela conversa, <span class="giz-sub">do seu jeito de falar</span></h2>
+        <p>Pessoal ou negócio: no cadastro você escolhe, e as categorias se ajustam ao seu caso.</p>
+      </div>
+      <div class="grade">
+        <article class="cartao sobe">
+          <h3><span class="ic">✍️</span>Anotar sem esforço</h3>
+          <ul>
+            <li>Frases naturais: <code>paguei 80 de luz ontem</code></li>
+            <li>Valores por extenso: <code>cento e trinta e dois e oitenta</code></li>
+            <li>Áudio, foto de comprovante e PDF</li>
+            <li>Aprende a categoria pela descrição: na 2ª vez ela já sabe</li>
+            <li>Corrige digitação: <code>extarto</code> → extrato</li>
+          </ul>
+        </article>
+        <article class="cartao sobe">
+          <h3><span class="ic">🏦</span>Contas e cartões</h3>
+          <ul>
+            <li>Saldo de cada banco e do dinheiro em espécie</li>
+            <li>Transferências entre as suas contas</li>
+            <li>Cartão de crédito com fatura e compras parceladas</li>
+            <li><code>ajustar</code> deixa o saldo igual ao do banco</li>
+          </ul>
+        </article>
+        <article class="cartao lousinha sobe">
+          <h3><span class="ic">🔔</span>A pagar e a receber</h3>
+          <ul>
+            <li>Parcelas, prazos e aviso no dia do vencimento</li>
+            <li>Mensagem de cobrança pronta, com link do WhatsApp e o seu Pix</li>
+            <li><b>Cobrador insistente</b>: no dia de receber, ela te lembra de cobrar de 4 em 4 horas</li>
+            <li>Boleto na foto: já pagou ou vai pagar? Ela já provisiona</li>
+          </ul>
+        </article>
+        <article class="cartao sobe">
+          <h3><span class="ic">📊</span>Relatórios e painel</h3>
+          <ul>
+            <li>Extrato por período ou <b>completo</b></li>
+            <li>Relatório por categoria e por descrição, com cada lançamento</li>
+            <li>Painel com gráficos no celular e botão <b>Comparar</b> meses</li>
+            <li>Toque numa categoria para ver o que tem dentro</li>
+          </ul>
+        </article>
+        <article class="cartao sobe">
+          <h3><span class="ic">🔁</span>No automático</h3>
+          <ul>
+            <li>Contas fixas: no dia, ela pergunta "já foi pago?"</li>
+            <li>Resumo da semana todo domingo</li>
+            <li>Metas de gasto por categoria</li>
+            <li><code>rachar R$120 jantar com joao e maria</code></li>
+          </ul>
+        </article>
+        <article class="cartao sobe">
+          <h3><span class="ic">🔒</span>Seus dados são seus</h3>
+          <ul>
+            <li>Cada pessoa com os seus próprios dados, separados</li>
+            <li>Apagou sem querer? <code>recuperar</code> (lixeira de 30 dias)</li>
+            <li><code>exportar meus dados</code> manda uma planilha com tudo</li>
+            <li><code>apagar meus dados</code> apaga tudo de vez</li>
+            <li>Backup automático todo dia</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== PAINEL DE EXEMPLO ===================== -->
+  <section id="painel" style="padding-top:0">
+    <div class="miolo">
+      <div class="sec-tit sobe">
+        <span class="eyebrow">O painel da Lavi</span>
+        <h2>Mande <span class="giz-sub">"painel"</span> e veja tudo em gráficos</h2>
+        <p>A Lavi manda um link pessoal que abre no celular. Experimente aqui: troque o mês, compare e toque numa categoria
+          para ver os lançamentos dela.</p>
+      </div>
+      <div class="painel-ex sobe" id="painelEx">
+        <div class="cab">
+          <div><h3>Olá, Ana 👋</h3><div class="sub">Painel da Lavi · transferências e ajustes não entram nos totais</div></div>
+          <span class="etiqueta">Dados de exemplo</span>
+        </div>
+        <div class="controles" role="group" aria-label="Mês do painel">
+          <button type="button" id="pmOut" aria-pressed="false">Out/2026</button>
+          <button type="button" id="pmNov" aria-pressed="true">Nov/2026</button>
+          <button type="button" id="pmCmp" aria-pressed="false">Comparar com o mês anterior</button>
+        </div>
+        <div class="kpis" id="pKpis"></div>
+        <div class="painel-corpo">
+          <div class="rosca"><svg viewBox="0 0 200 200" id="pRosca" role="img" aria-label="Divisão das saídas por categoria"></svg>
+            <div class="dica-toque">Para onde foi o dinheiro</div></div>
+          <div class="cats" id="pCats"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== LINHA DO TEMPO ===================== -->
+  <section id="historia" style="padding-top:0">
+    <div class="miolo">
+      <div class="sec-tit sobe">
+        <span class="eyebrow">Como chegamos aqui</span>
+        <h2>De um programa no terminal <span class="giz-sub">a uma assistente no WhatsApp</span></h2>
+        <p>A Lavi começou em outubro de 2026 e ganha novidades quase todo dia.</p>
+      </div>
+      <ol class="tempo">
+        <li class="sobe"><time>17/10</time><span class="ponto"></span><div><h3>O primeiro passo</h3><p>Um programa simples que anotava entradas e saídas, separava por categoria e mostrava o resumo do dia.</p></div></li>
+        <li class="sobe"><time>23/10</time><span class="ponto"></span><div><h3>A Lavi chega ao WhatsApp</h3><p>Número próprio, contas a pagar e a receber, mensagem de cobrança com link e o visual com um emoji para cada conta.</p></div></li>
+        <li class="sobe"><time>30/10</time><span class="ponto"></span><div><h3>Uma Lavi para cada pessoa</h3><p>Cadastro guiado, dados separados por pessoa, perfil pessoal ou negócio e backup diário.</p></div></li>
+        <li class="sobe"><time>31/10</time><span class="ponto"></span><div><h3>Painel, cartão e automáticos</h3><p>Painel com gráficos, cartão de crédito, contas fixas, resumo de domingo, metas e valores por extenso.</p></div></li>
+        <li class="sobe"><time>01/11</time><span class="ponto"></span><div><h3>Conversa do seu jeito</h3><p>Ela entende frases soltas, filtros como "quanto gastei com uber em outubro" e ganha a lixeira de 30 dias.</p></div></li>
+        <li class="sobe"><time>02/11</time><span class="ponto"></span><div><h3>Inteligência artificial e portas abertas</h3><p>IA para entender o que as regras não pegam, áudio e foto de comprovante, e qualquer pessoa pode começar a usar.</p></div></li>
+        <li class="sobe agora"><time>03/11</time><span class="ponto"></span><div><h3>Hoje</h3><p>Cobrador insistente, comprovante em PDF, boleto "já pagou ou vai pagar?", relatórios por categoria e descrição e painel clicável.</p></div></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ===================== EM CONSTRUÇÃO ===================== -->
+  <section id="obra" style="padding-top:0">
+    <div class="miolo">
+      <div class="obra sobe">
+        <div>
+          <div class="fita" aria-hidden="true"></div>
+          <span class="eyebrow" style="color:var(--rosa)">🚧 Em construção</span>
+          <h2>A Lavi ainda está aprendendo, e você pode aprender com ela</h2>
+          <p>Estamos em desenvolvimento e testando com as primeiras pessoas. Cada conversa ajuda a Lavi a entender melhor.
+            Achou algo estranho? Mande <code style="font:600 14px ui-monospace,Consolas,monospace">feedback</code> seguido do que aconteceu, direto para ela.</p>
+          <div class="gratis-grande">✅ Por enquanto é <b>gratuita</b>, enquanto estamos em desenvolvimento.</div>
+        </div>
+        <div class="progresso" aria-label="Andamento do projeto">
+          <div><div class="rot"><span>Lançar por texto, áudio, foto e PDF</span><span>pronto</span></div><div class="trilho"><i style="width:100%"></i></div></div>
+          <div><div class="rot"><span>Contas, cartões, a pagar e a receber</span><span>pronto</span></div><div class="trilho"><i style="width:100%"></i></div></div>
+          <div><div class="rot"><span>Relatórios e painel</span><span>pronto</span></div><div class="trilho"><i style="width:100%"></i></div></div>
+          <div><div class="rot"><span>Testes com as primeiras pessoas</span><span>em andamento</span></div><div class="trilho"><i class="rosa" style="width:60%"></i></div></div>
+          <div><div class="rot"><span>Lavi na nuvem, sempre no ar</span><span>próximo passo</span></div><div class="trilho"><i class="rosa" style="width:15%"></i></div></div>
+          <div><div class="rot"><span>Planos de assinatura</span><span>no futuro</span></div><div class="trilho"><i class="rosa" style="width:8%"></i></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== COMECE AGORA + COMPARTILHAR ===================== -->
+  <section id="comece" style="padding-top:0">
+    <div class="miolo">
+      <div class="comece sobe">
+        <div>
+          <span class="eyebrow">Comece agora, é grátis</span>
+          <h2>Mande um "oi" para a Lavi no WhatsApp</h2>
+          <p>Ela se apresenta, faz um cadastro rapidinho (nome, pessoal ou negócio e os seus bancos) e você já pode
+            mandar o primeiro gasto.</p>
+          <div class="numero">
+            <a class="btn btn-zap" href="https://wa.me/556182699027?text=Oi%20Lavi!" target="_blank" rel="noopener">Abrir conversa</a>
+            <output id="numeroLavi">(61) 8269-9027</output>
+            <button type="button" id="copiaNumero">Copiar número</button>
+          </div>
+          <div class="compartilhar">
+            <span>Conhece alguém que precisa organizar o dinheiro? Compartilhe</span>
+            <div class="redes">
+              <a id="shZap" target="_blank" rel="noopener" href="#">WhatsApp</a>
+              <a id="shTele" target="_blank" rel="noopener" href="#">Telegram</a>
+              <a id="shFace" target="_blank" rel="noopener" href="#">Facebook</a>
+              <a id="shX" target="_blank" rel="noopener" href="#">X</a>
+              <a id="shLin" target="_blank" rel="noopener" href="#">LinkedIn</a>
+              <button type="button" id="copiaLink">Copiar convite</button>
+            </div>
+            <div class="aviso-copia" id="avisoCopia" aria-live="polite"></div>
+          </div>
+        </div>
+        <div class="qr">
+          <div id="qr" aria-label="QR code que abre a conversa com a Lavi no WhatsApp"></div>
+          <small>Aponte a câmera do celular para falar com a Lavi</small>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Lavi guia: acompanha a página e explica cada parte -->
+<aside class="guia" id="guia" aria-live="polite">
+  <div class="fala" id="guiaFala">
+    <div id="guiaTexto">Oi! Eu sou a <b>Lavi</b>. Quer que eu te mostre o site? 😊</div>
+    <div class="acoes-guia"><button type="button" id="guiaFecha">Agora não</button><button type="button" class="vai" id="guiaVai">Me mostra ▸</button><a class="vai" id="guiaZap" hidden href="https://wa.me/556182699027?text=Oi%20Lavi!" target="_blank" rel="noopener">Falar com a Lavi</a></div>
+  </div>
+  <button type="button" class="rosto" id="guiaRosto" aria-label="Falar com a Lavi guia"><img src="lavi.jpg" alt=""></button>
+</aside>
+
+<footer>
+  <div class="miolo">
+    <b>Lavi</b>
+    <span>Assistente financeira no WhatsApp · em desenvolvimento · gratuita por enquanto</span>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+(function () {
+  document.documentElement.classList.add('js');
+  const calma = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ---------- título escrito a giz ----------
+  const t = document.getElementById('tituloGiz'), r = document.getElementById('riscoGiz');
+  if (!calma && t.animate) {
+    t.animate([{strokeDashoffset: 900, fill: 'transparent'}, {strokeDashoffset: 0, fill: 'transparent', offset: .75},
+               {strokeDashoffset: 0, fill: 'var(--giz)'}], {duration: 2600, easing: 'ease-in-out', fill: 'both'});
+    r.animate([{strokeDashoffset: 420}, {strokeDashoffset: 0}], {duration: 900, delay: 2000, easing: 'ease-out', fill: 'both'});
+  } else { t.style.fill = 'var(--giz)'; }
+
+  // ---------- balão da Lavi no topo ----------
+  const falas = ['Oi! 👋 Eu sou a <b>Lavi</b>. Vem que eu te mostro como funciona.',
+                 'Pode me mandar <b>áudio</b>, foto do comprovante ou PDF. 🎤📸',
+                 'Eu te lembro de quem te deve, <b>de 4 em 4 horas</b> se precisar. 🔔',
+                 'Por enquanto sou <b>gratuita</b>! Estamos em construção. 🚧'];
+  const balao = document.getElementById('balao'), caixa = document.getElementById('avatarCaixa');
+  const palco = caixa.parentElement;
+  let f = 0;
+  // "falar": o avatar balança e solta ondas de giz enquanto o balão muda
+  function falar(el) { el.classList.remove('falando'); void el.offsetWidth; el.classList.add('falando');
+    setTimeout(() => el.classList.remove('falando'), 2400); }
+  if (!calma) setInterval(() => {
+    f = (f + 1) % falas.length;
+    balao.innerHTML = '<span class="digita"><i></i><i></i><i></i></span>';
+    setTimeout(() => { balao.innerHTML = falas[f]; falar(palco); }, 900);
+  }, 5200);
+  if (!calma) {
+    setTimeout(() => falar(palco), 2600);
+    // aceno de vez em quando
+    setInterval(() => { caixa.classList.remove('acena'); void caixa.offsetWidth; caixa.classList.add('acena'); }, 9000);
+    // inclina seguindo o mouse ou o dedo
+    palco.addEventListener('pointermove', (e) => {
+      const r = caixa.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
+      caixa.style.transform = `rotateY(${x * 14}deg) rotateX(${-y * 14}deg)`;
+    });
+    palco.addEventListener('pointerleave', () => { caixa.style.transform = ''; });
+  }
+
+  // ---------- conversa simulada ----------
+  const CENAS = [
+    [['eu', 'gastei 45 no mercado no nubank'],
+     ['ela', '⛔ <b>SAÍDA registrada</b>  #128\n💵 <b>R$ 45,00</b>\n🏷️ <b>ALIMENTAÇÃO</b>\n📝 MERCADO\n🟪 NUBANK\n┈┈┈┈┈┈┈┈┈┈\n💼 Saldo: <b>R$ 1.255,00</b>']],
+    [['eu', 'AUDIO'],
+     ['ela', '🎤 Ouvi: <i>ontem eu recebi mil e quinhentos do salário no inter</i>'],
+     ['ela', '✅ <b>ENTRADA registrada</b>  #129\n💵 <b>R$ 1.500,00</b>\n📅 <b><i>02/11/2026</i></b>\n🏷️ <b>RECEITA</b>\n📝 SALÁRIO\n🟧 INTER\n┈┈┈┈┈┈┈┈┈┈\n💼 Saldo: <b>R$ 2.310,40</b>']],
+    [['eu', 'FOTO'],
+     ['ela', '📸 <b>Entendi:</b> ⛔ <b>R$ 90,93</b> · TECHPRINT · vence <b>10/11/2026</b>\n\nEsse você já pagou?\n1. ✅ <b>Já paguei</b> → lanço a saída agora\n2. 🗓️ <b>Vou pagar</b> → guardo no <b>a pagar</b> (vence 10/11)'],
+     ['eu', '2'],
+     ['ela', '🗓️ 🧾 <b>A PAGAR registrado</b> #6\n👤 TECHPRINT\nTotal R$ 90,93\n• <b><i>10/11/2026</i></b> R$ 90,93\n\nEu aviso quando chegar a data. Ao pagar: <b>baixar 6</b>']],
+    [['eu', 'relatorio por categoria mes passado'],
+     ['ela', '📊 <b>RELATÓRIO POR CATEGORIA</b>\n📆 Outubro/2026\n✅ Entradas: <b>R$ 5.274,39</b> (22)\n⛔ Saídas: <b>R$ 3.449,23</b> (47)\n┈┈┈┈┈┈┈┈┈┈\n🏷️ <b>ALIMENTAÇÃO</b>: <b>R$ 1.017,66</b> (19)\n   • MERCADO: R$ 650,00 (4x)\n   • LANCHE: R$ 317,40 (6x)\n🏷️ <b>TRANSPORTE</b>: <b>R$ 435,41</b> (9)\n   • GASOLINA: R$ 380,00 (5x)']]
+  ];
+  const conversa = document.getElementById('conversa'), status = document.getElementById('status');
+  const botoes = [...document.querySelectorAll('.cena')];
+  let timers = [], atual = 0, autoplay = !calma;
+  const hora = (i) => '09:' + String(12 + i).padStart(2, '0');
+
+  function bolha(quem, txt, i) {
+    const d = document.createElement('div');
+    d.className = 'msg ' + quem;
+    if (txt === 'AUDIO') {
+      d.innerHTML = '<div class="audio"><span class="play">▶</span><span class="onda">' +
+        Array.from({length: 22}, (_, k) => `<i style="height:${6 + Math.round(Math.abs(Math.sin(k * 1.7)) * 18)}px;animation-delay:${k * 0.05}s"></i>`).join('') +
+        '</span><small>0:06</small></div>';
+    } else if (txt === 'FOTO') {
+      d.innerHTML = '<div class="foto"><b>TECHPRINT Distribuidora</b><div class="lin"></div><div class="lin" style="width:70%"></div>' +
+        '<div>Vencimento: 10/11/2026</div><div><b>R$ 90,93</b></div><div class="cod"></div></div>';
+    } else {
+      d.innerHTML = txt;
+    }
+    d.innerHTML += `<span class="h">${hora(i)}${quem === 'eu' ? ' ✓✓' : ''}</span>`;
+    conversa.appendChild(d);
+    while (conversa.children.length > 7) conversa.firstChild.remove();
+  }
+  function tocar(n) {
+    timers.forEach(clearTimeout); timers = [];
+    atual = n;
+    botoes.forEach((b, i) => { b.setAttribute('aria-pressed', i === n); });
+    conversa.innerHTML = '';
+    const passos = CENAS[n];
+    let tempo = 300;
+    passos.forEach(([quem, txt], i) => {
+      if (quem === 'ela') {
+        timers.push(setTimeout(() => {
+          status.textContent = 'digitando…';
+          const dig = document.createElement('div'); dig.className = 'digitando'; dig.innerHTML = '<i></i><i></i><i></i>';
+          conversa.appendChild(dig);
+        }, tempo));
+        tempo += 1100;
+        timers.push(setTimeout(() => {
+          conversa.querySelector('.digitando')?.remove(); status.textContent = 'online'; bolha(quem, txt, i);
+        }, tempo));
+      } else {
+        timers.push(setTimeout(() => bolha(quem, txt, i), tempo));
+      }
+      tempo += quem === 'ela' ? 1500 : 900;
+    });
+    const dur = tempo + 2600;
+    botoes[n].style.setProperty('--dur', dur + 'ms');
+    const barra = botoes[n].querySelector('.barra i'); barra.style.animation = 'none'; barra.offsetWidth; barra.style.animation = '';
+    if (autoplay) timers.push(setTimeout(() => tocar((n + 1) % CENAS.length), dur));
+  }
+  botoes.forEach((b, i) => b.addEventListener('click', () => { autoplay = !calma; tocar(i); }));
+  if (!calma) tocar(0);
+
+  // ---------- leve deslize ao rolar (o conteúdo nunca fica escondido) ----------
+  if (!calma && 'IntersectionObserver' in window) {
+    const els = [...document.querySelectorAll('.sobe')];
+    const io = new IntersectionObserver((es) => es.forEach((e) => {
+      if (e.isIntersecting) { e.target.classList.remove('espera'); io.unobserve(e.target); }
+    }), {threshold: .12});
+    els.forEach((el) => {
+      const r = el.getBoundingClientRect();
+      if (r.top > innerHeight) { el.classList.add('espera'); io.observe(el); }
+    });
+  }
+
+  // ---------- comece agora: copiar, compartilhar e QR code ----------
+  const ZAP = 'https://wa.me/556182699027?text=' + encodeURIComponent('Oi Lavi!');
+  const SITE = location.href.split('#')[0];
+  const CONVITE = 'Conheci a Lavi, uma assistente financeira que funciona pelo WhatsApp: você conta o que gastou ' +
+    'e ela organiza tudo. Está gratuita enquanto está em desenvolvimento! Chama ela: ' + ZAP;
+  const enc = encodeURIComponent;
+  document.getElementById('shZap').href = 'https://wa.me/?text=' + enc(CONVITE);
+  document.getElementById('shTele').href = 'https://t.me/share/url?url=' + enc(ZAP) + '&text=' + enc(CONVITE.split(' Chama ela:')[0]);
+  document.getElementById('shFace').href = 'https://www.facebook.com/sharer/sharer.php?u=' + enc(SITE);
+  document.getElementById('shX').href = 'https://twitter.com/intent/tweet?text=' + enc(CONVITE);
+  document.getElementById('shLin').href = 'https://www.linkedin.com/sharing/share-offsite/?url=' + enc(SITE);
+  const aviso = document.getElementById('avisoCopia');
+  function copiar(txt, ok, alvo) {
+    const falhou = () => { const s = getSelection(), rg = document.createRange(); rg.selectNodeContents(alvo); s.removeAllRanges(); s.addRange(rg);
+      aviso.textContent = 'Texto selecionado: é só copiar (Ctrl+C ou segurar o dedo).'; };
+    try { navigator.clipboard.writeText(txt).then(() => { aviso.textContent = ok; }, falhou); } catch (e) { falhou(); }
+  }
+  document.getElementById('copiaNumero').onclick = () => copiar('+55 61 8269-9027', 'Número copiado! ✅', document.getElementById('numeroLavi'));
+  document.getElementById('copiaLink').onclick = () => { aviso.textContent = ''; copiar(CONVITE, 'Convite copiado! Cole no WhatsApp, Instagram ou onde quiser. ✅', aviso); };
+  try {
+    const q = qrcode(0, 'M'); q.addData(ZAP); q.make();
+    document.getElementById('qr').innerHTML = q.createSvgTag({cellSize: 4, margin: 2, scalable: true});
+  } catch (e) { document.getElementById('qr').textContent = 'wa.me/556182699027'; }
+
+  // ---------- painel de exemplo (os números são inventados, como na etiqueta) ----------
+  const MESES_EX = {
+    out: {rotulo: 'Out/2026', ent: 4850, cats: [
+      ['Moradia e contas', 1480, [['05/10', 'ALUGUEL', 'Nubank', 1200], ['10/10', 'LUZ', 'Nubank', 168.4], ['12/10', 'INTERNET', 'Inter', 111.6]]],
+      ['Alimentação', 1105, [['03/10', 'MERCADO', 'Nubank', 412.9], ['11/10', 'MERCADO', 'Caixa', 287.3], ['18/10', 'IFOOD', 'Cartão Nubank', 94.8], ['25/10', 'PADARIA', 'Dinheiro', 310]]],
+      ['Transporte', 520, [['02/10', 'GASOLINA', 'Inter', 250], ['16/10', 'GASOLINA', 'Inter', 200], ['21/10', 'UBER', 'Nubank', 70]]],
+      ['Lazer e estilo de vida', 390, [['13/10', 'CINEMA', 'Nubank', 86], ['20/10', 'RESTAURANTE', 'Cartão Nubank', 304]]],
+      ['Saúde e educação', 240, [['08/10', 'FARMÁCIA', 'Dinheiro', 90], ['15/10', 'CURSO', 'Nubank', 150]]]]},
+    nov: {rotulo: 'Nov/2026', ent: 5100, cats: [
+      ['Moradia e contas', 1452, [['05/11', 'ALUGUEL', 'Nubank', 1200], ['10/11', 'LUZ', 'Nubank', 140.4], ['12/11', 'INTERNET', 'Inter', 111.6]]],
+      ['Alimentação', 860, [['01/11', 'MERCADO', 'Nubank', 380.5], ['09/11', 'MERCADO', 'Caixa', 254.2], ['14/11', 'LANCHE', 'Dinheiro', 45.3], ['22/11', 'IFOOD', 'Cartão Nubank', 180]]],
+      ['Transporte', 410, [['03/11', 'GASOLINA', 'Inter', 230], ['17/11', 'GASOLINA', 'Inter', 180]]],
+      ['Lazer e estilo de vida', 455, [['07/11', 'SHOW', 'Nubank', 255], ['21/11', 'RESTAURANTE', 'Cartão Nubank', 200]]],
+      ['Saúde e educação', 150, [['15/11', 'CURSO', 'Nubank', 150]]]]}
+  };
+  const CORES = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4'];
+  const real = (v) => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  let mesEx = 'nov', cmpEx = false;
+  const soma = (m) => m.cats.reduce((s, c) => s + c[1], 0);
+  function desenhaPainel() {
+    const A = MESES_EX[mesEx], B = MESES_EX.out, sai = soma(A), res = A.ent - sai, saiB = soma(B), resB = B.ent - saiB;
+    const delta = (a, b, menor) => {
+      if (!cmpEx || mesEx === 'out') return '<div class="d">&nbsp;</div>';
+      const p = (a - b) / Math.abs(b) * 100, bom = menor ? p <= 0 : p >= 0;
+      return `<div class="d ${bom ? 'pos' : 'neg'}">${p > 0 ? '▲' : '▼'} ${Math.abs(p).toFixed(0)}% (era ${real(b)})</div>`;
+    };
+    document.getElementById('pKpis').innerHTML =
+      `<div class="kpi"><div class="t">Entradas</div><div class="v pos">${real(A.ent)}</div>${delta(A.ent, B.ent, false)}</div>
+       <div class="kpi"><div class="t">Saídas</div><div class="v neg">${real(sai)}</div>${delta(sai, saiB, true)}</div>
+       <div class="kpi"><div class="t">Resultado</div><div class="v ${res >= 0 ? 'pos' : 'neg'}">${real(res)}</div>${delta(res, resB, false)}</div>`;
+    // rosca
+    const C = 2 * Math.PI * 70; let acc = 0;
+    document.getElementById('pRosca').innerHTML = A.cats.map((c, i) => {
+      const frac = c[1] / sai, s = `<circle cx="100" cy="100" r="70" stroke="${CORES[i]}" stroke-dasharray="${frac * C} ${C}"
+        stroke-dashoffset="${-acc * C}" transform="rotate(-90 100 100)"><title>${c[0]}: ${real(c[1])}</title></circle>`;
+      acc += frac; return s;
+    }).join('') + `<text x="100" y="98" text-anchor="middle">${real(sai)}</text><text class="rot" x="100" y="118" text-anchor="middle">saídas</text>`;
+    // categorias que abrem
+    const maxV = Math.max(...A.cats.map((c) => c[1]), ...B.cats.map((c) => c[1]));
+    const abertas = [...document.querySelectorAll('#pCats details[open]')].map((d) => d.dataset.cat);
+    document.getElementById('pCats').innerHTML = A.cats.map((c, i) => {
+      const ant = (B.cats.find((x) => x[0] === c[0]) || [0, 0])[1];
+      const cmp = cmpEx && mesEx === 'nov' ? `<i class="cmp" style="width:${ant / maxV * 100}%"></i>` : '';
+      const txt = cmpEx && mesEx === 'nov' ? `${real(c[1])} <small style="color:var(--mut);font-weight:400">/ ${real(ant)}</small>` : real(c[1]);
+      return `<details data-cat="${c[0]}"${abertas.includes(c[0]) || (!abertas.length && i === 1) ? ' open' : ''}><summary>
+        <div class="linha"><span>${c[0]}</span><span>${txt}</span></div>
+        <div class="trilho"><i style="width:${c[1] / maxV * 100}%;background:${CORES[i]}"></i>${cmp}</div></summary>
+        <div class="abre">${c[2].map(([d, desc, conta, v]) => `<div class="lanc"><span>${desc}<small>${d} · ${conta}</small></span><b class="neg">-${real(v)}</b></div>`).join('')}</div>
+      </details>`;
+    }).join('') + '<div class="dica-toque">Toque numa categoria para abrir ou fechar os lançamentos.</div>';
+    document.getElementById('pmOut').setAttribute('aria-pressed', mesEx === 'out');
+    document.getElementById('pmNov').setAttribute('aria-pressed', mesEx === 'nov');
+    document.getElementById('pmCmp').setAttribute('aria-pressed', cmpEx);
+  }
+  document.getElementById('pmOut').onclick = () => { mesEx = 'out'; desenhaPainel(); };
+  document.getElementById('pmNov').onclick = () => { mesEx = 'nov'; desenhaPainel(); };
+  document.getElementById('pmCmp').onclick = () => { cmpEx = !cmpEx; mesEx = 'nov'; desenhaPainel(); };
+  desenhaPainel();
+
+  // ---------- Lavi guia: fala sobre a parte da página que está na tela ----------
+  const guia = document.getElementById('guia'), gTexto = document.getElementById('guiaTexto');
+  const PARADAS = [
+    ['inicio', 'Oi! Eu sou a <b>Lavi</b>. Cuido do seu dinheiro pelo WhatsApp. Quer que eu te mostre o site? 😊'],
+    ['demo', 'Aqui você me vê trabalhando: <b>texto, áudio, foto do boleto</b> e relatórios. Toque nos exemplos!'],
+    ['recursos', 'Isso tudo eu <b>já faço</b> hoje: contas, cartões, cobranças, relatórios e os seus dados protegidos.'],
+    ['painel', 'Esse é o meu <b>painel</b>. Troca o mês, compara e toca numa categoria pra ver os lançamentos. 📊'],
+    ['historia', 'Nasci em <b>17 de outubro</b> e aprendo coisas novas quase todo dia. 💜'],
+    ['obra', 'Ainda estou <b>em construção</b>, por isso sou <b>gratuita</b> por enquanto! 🚧'],
+    ['comece', 'Bora começar? Toque em <b>Abrir conversa</b> e me manda um "oi". Ah, e me indica pros amigos! 😉']
+  ];
+  let parada = 0, guiou = false;
+  function guiaFala(i) {
+    parada = i;
+    gTexto.innerHTML = PARADAS[i][1];
+    const ultima = i === PARADAS.length - 1;
+    document.getElementById('guiaVai').hidden = ultima;
+    document.getElementById('guiaZap').hidden = !ultima;
+    document.getElementById('guiaVai').textContent = 'Próximo ▸';
+    guia.classList.remove('recolhida');
+    if (!calma) falar(guia);
+  }
+  document.getElementById('guiaVai').onclick = () => {
+    guiou = true;
+    const prox = parada + 1;
+    document.getElementById(PARADAS[prox][0]).scrollIntoView({behavior: calma ? 'auto' : 'smooth', block: 'start'});
+    guiaFala(prox);
+  };
+  document.getElementById('guiaFecha').onclick = () => guia.classList.add('recolhida');
+  document.getElementById('guiaRosto').onclick = () => guia.classList.contains('recolhida') ? guiaFala(parada) : guia.classList.add('recolhida');
+  document.getElementById('guiaFecha').textContent = 'Agora não';
+  if ('IntersectionObserver' in window) {
+    const vistas = new IntersectionObserver((es) => es.forEach((e) => {
+      if (!e.isIntersecting || guia.classList.contains('recolhida')) return;
+      const i = PARADAS.findIndex((p) => p[0] === e.target.id);
+      if (i > 0 && i !== parada) guiaFala(i);
+    }), {rootMargin: '-45% 0px -45% 0px'});
+    PARADAS.forEach(([id]) => { const el = document.getElementById(id); if (el) vistas.observe(el); });
+  }
+  if (innerWidth < 600) setTimeout(() => { if (!guiou && parada === 0) guia.classList.add('recolhida'); }, 9000);
+
+  // ---------- números contando ----------
+  if (!calma) document.querySelectorAll('[data-conta]').forEach((el) => {
+    const alvo = +el.dataset.conta, prefixo = el.textContent.startsWith('R$') ? 'R$ ' : '';
+    if (!alvo) return;
+    let i = 0; const passo = () => { i++; el.textContent = prefixo + Math.min(alvo, Math.round(alvo * i / 30)); if (i < 30) requestAnimationFrame(passo); };
+    el.textContent = prefixo + '0'; requestAnimationFrame(passo);
+  });
+})();
+</script>
+
+</body>
+</html>
