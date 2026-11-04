@@ -599,10 +599,6 @@ footer b{font:30px/1 var(--f-giz);color:var(--giz)}
             <span>Conhece alguém que precisa organizar o dinheiro? Compartilhe</span>
             <div class="redes">
               <a id="shZap" target="_blank" rel="noopener" href="#">WhatsApp</a>
-              <a id="shTele" target="_blank" rel="noopener" href="#">Telegram</a>
-              <a id="shFace" target="_blank" rel="noopener" href="#">Facebook</a>
-              <a id="shX" target="_blank" rel="noopener" href="#">X</a>
-              <a id="shLin" target="_blank" rel="noopener" href="#">LinkedIn</a>
               <button type="button" id="copiaLink">Copiar convite</button>
             </div>
             <div class="aviso-copia" id="avisoCopia" aria-live="polite"></div>
@@ -757,15 +753,11 @@ footer b{font:30px/1 var(--f-giz);color:var(--giz)}
 
   // ---------- comece agora: copiar, compartilhar e QR code ----------
   const ZAP = 'https://wa.me/556182699027?text=' + encodeURIComponent('Oi Lavi!');
-  const SITE = location.href.split('#')[0];
   const CONVITE = 'Conheci a Lavi, uma assistente financeira que funciona pelo WhatsApp: você conta o que gastou ' +
     'e ela organiza tudo. Está gratuita enquanto está em desenvolvimento! Chama ela: ' + ZAP;
   const enc = encodeURIComponent;
   document.getElementById('shZap').href = 'https://wa.me/?text=' + enc(CONVITE);
-  document.getElementById('shTele').href = 'https://t.me/share/url?url=' + enc(ZAP) + '&text=' + enc(CONVITE.split(' Chama ela:')[0]);
-  document.getElementById('shFace').href = 'https://www.facebook.com/sharer/sharer.php?u=' + enc(SITE);
-  document.getElementById('shX').href = 'https://twitter.com/intent/tweet?text=' + enc(CONVITE);
-  document.getElementById('shLin').href = 'https://www.linkedin.com/sharing/share-offsite/?url=' + enc(SITE);
+  // (Telegram, Facebook, X e LinkedIn saíram por enquanto; voltam no futuro)
   const aviso = document.getElementById('avisoCopia');
   function copiar(txt, ok, alvo) {
     const falhou = () => { const s = getSelection(), rg = document.createRange(); rg.selectNodeContents(alvo); s.removeAllRanges(); s.addRange(rg);
